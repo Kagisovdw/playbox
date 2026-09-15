@@ -162,4 +162,4 @@ leaves mid-game.
 
 ---
 
-Created by Kagiso van der Westhuizen (Pty) Ltd · 2026
+© 2026 Kagiso van der Westhuizen
