@@ -1,5 +1,7 @@
 # Playbox
 
+**Play it: https://kagisovdw.github.io/playbox/**
+
 Five board and card games in one browser app: **Ludo**, **Uno**, **Snakes & Ladders**,
 **Connect Four** and **Memory**. Every game supports computer opponents and
 pass-and-play on a single device.
@@ -16,17 +18,18 @@ Everything is plain HTML, CSS and classic `<script>` files, so it runs straight 
 Playbox is a PWA, so it installs to a phone home screen or the Windows taskbar and
 runs offline like a native app — no store, no packaging.
 
+Open <https://kagisovdw.github.io/playbox/> and use your browser's **Install** /
+**Add to Home Screen** option.
+
 That needs the folder served over **http(s)**; service workers are blocked on
 `file://`, so double-clicking `index.html` gives you the games but not the install
-prompt. Any static host works (GitHub Pages, Netlify, an internal server). To try it
-locally first:
+prompt. To try it locally instead:
 
 ```
 python -m http.server 8000
 ```
 
-Then open `http://localhost:8000` and use your browser's **Install** / **Add to Home
-Screen** option.
+Then open `http://localhost:8000`.
 
 The pieces: `manifest.webmanifest` (name, colours, icons), `sw.js` (offline cache),
 and `icons/` (generated PNGs of the brand mark). The service worker is
