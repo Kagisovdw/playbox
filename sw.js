@@ -19,7 +19,7 @@
    disk (file://) skips registration - see the bottom of index.html.
    ========================================================================== */
 
-var CACHE = 'playbox-v4';
+var CACHE = 'playbox-v5';
 
 var SHELL = [
   './',

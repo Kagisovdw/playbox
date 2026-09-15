@@ -159,3 +159,7 @@ leaves mid-game.
   site data resets them; the app degrades gracefully if storage is unavailable.
 - Respects `prefers-reduced-motion`.
 - Layout adapts down to phone widths.
+
+---
+
+Created by Kagiso van der Westhuizen (Pty) Ltd · 2026
