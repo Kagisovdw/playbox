@@ -58,35 +58,43 @@ phones or laptops, tap **Play across devices**, and create or join a room with
 the four-letter code. The button only appears when `server.js` is serving the
 page, so it stays hidden on GitHub Pages and on `file://`.
 
-No dependencies; Node's `http` module only. The server serves the files and
-relays moves. It owns the seat list, one random seed and the order of moves,
-which is what keeps devices agreeing: every device runs the same game code, so
-the same seed plus the same moves produces the same board. A click is never
-applied where it happens — it goes to the server and comes back to everyone
-at once.
+No dependencies: Node's `http` module plus `lib/ws.js`, a small WebSocket
+implementation in this repo (handshake, masked frames, fragmentation,
+ping/pong). One socket per device.
 
-### What works, and what does not
+### How devices stay in sync
 
-Working across devices: **X's & O's** and **Memory** are verified end to end
-(identical shuffles, moves relayed both ways, out-of-turn clicks refused).
-**Connect Four**, **Snakes & Ladders** and **Ludo** share the same shape — one
-board everyone sees — but are not yet verified.
+Whoever's turn it is plays normally. When the move settles, their device sends
+a **snapshot** of the whole game and everyone else restores it. No device
+replays another's moves, so there is nothing to drift: a device either has the
+newest snapshot or it does not. The server keeps the latest snapshot and
+enforces the only rule it can check without knowing any game — a snapshot is
+accepted only from the seat the previous snapshot said was to move.
 
-**Uno is one-device only**, and the menu card says so. Every other game shows
-the same board to everyone, so a move can travel as "the square at this
-position". Uno renders a different board per player — your hand, your controls
-— so positions do not line up between devices. It needs moves described
-semantically ("play card 3") before it can work, which is the next piece of
-work rather than a small fix.
+A game opts in by returning `snapshot()` and `restore(snap)` from `start()`,
+and setting `networked: true` in its registration. The snapshot must be plain
+JSON carrying a `turn` field. Games without it are refused in a room, with a
+message saying so.
 
-**Known bug:** server-sent event streams are not being released properly, so
-connections accumulate until the browser's six-per-origin limit is hit and the
-page stops responding. Reloading clears it. Do not rely on this for a long
-session yet.
+### What works
 
-The server also cannot referee: it enforces whose turn it is, but knows no
-game's rules, and every device holds the whole game state. Fine among people in
-the same room; not something to play against a stranger.
+**X's & O's** is verified end to end across two devices: moves in both
+directions, out-of-turn clicks refused, and the result plus the winning-line
+highlight appearing on both screens.
+
+The other five need `snapshot()` / `restore()` written — mechanical for
+Connect Four, Snakes & Ladders, Memory and Ludo, since their state is small
+and everyone sees the same board.
+
+**Uno needs more than that.** Every other game shows one board to everyone;
+Uno shows each player a different one, and the full state includes every
+hand. Sending it whole would hand every device everyone's cards. It needs
+snapshots filtered per seat, which is also the only honest way to make hidden
+hands genuinely secret.
+
+The server cannot referee: it enforces whose turn it is but knows no game's
+rules. Fine among people in the same room; not something to play against a
+stranger.
 
 ## The games
 
@@ -166,8 +174,9 @@ js/ludo.js        track geometry, move generation, captures, blocks, AI
 js/uno.js         deck, turn flow, action cards, challenges, UNO calls, AI
 js/memory.js      deck, flip/match flow, per-CPU memory model
 js/xo.js          classic 3x3 + Ultimate nine-board, minimax and alpha-beta
-js/net.js         across-devices lobby, move relay, seat ownership
-server.js         LAN server: static files + room relay (no dependencies)
+js/net.js         across-devices lobby, snapshot sync, seat ownership
+lib/ws.js         minimal WebSocket server (no dependencies)
+server.js         LAN server: static files + room and snapshot relay
 
 manifest.webmanifest  PWA metadata: name, colours, icon set
 sw.js                 service worker: offline cache (stale-while-revalidate)

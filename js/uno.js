@@ -893,9 +893,8 @@
       '<text x="14" y="14.4" font-size="7" font-weight="900" text-anchor="middle" fill="#f0483c">4</text></svg>',
     minPlayers: 2,
     maxPlayers: 4,
-    // Across devices every player sees a different board - their own hand,
-    // their own controls - so a move cannot be described as "the element at
-    // this position". Uno needs semantic moves before it can be networked.
+    // Not yet networked: snapshots would have to be filtered per seat so a
+    // device only ever receives its own hand. See README.
     networked: false,
     defaultPlayers: 3,
     difficulty: true,

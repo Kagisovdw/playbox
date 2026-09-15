@@ -547,7 +547,50 @@
     render();
     if (seats[turn].isAI) aiTurn();
 
-    return { destroy: function () { ticker.kill(); } };
+    /* --- across devices: publish and adopt the whole position --- */
+
+    return {
+      destroy: function () { ticker.kill(); },
+
+      /** Plain JSON, with `turn` naming the seat to move. */
+      snapshot: function () {
+        var snap = { turn: over ? -1 : turn, over: over, ultimate: ultimate };
+        if (ultimate) {
+          snap.small = state.small.map(function (b) { return b.slice(); });
+          snap.meta = state.meta.slice();
+          snap.active = state.active;
+        } else {
+          snap.cells = state.cells.slice();
+        }
+        return snap;
+      },
+
+      /**
+       * Adopt a position from another device. The end of the game is worked
+       * out here rather than sent, so every device shows the result banner
+       * and the modal through the same path it would have locally.
+       */
+      restore: function (snap) {
+        if (!snap || snap.ultimate !== ultimate || over) return;
+        busy = false;
+        turn = typeof snap.turn === 'number' && snap.turn >= 0 ? snap.turn : turn;
+
+        if (ultimate) {
+          if (!snap.small || !snap.meta) return;
+          state.small = snap.small.map(function (b) { return b.slice(); });
+          state.meta = snap.meta.slice();
+          state.active = typeof snap.active === 'number' ? snap.active : -1;
+        } else {
+          if (!snap.cells) return;
+          state.cells = snap.cells.slice();
+        }
+
+        var result = check();
+        if (result) { settle(result); return; }
+        render();
+        say();
+      }
+    };
   }
 
   /* -------------------------------------------------------------- register */
@@ -568,6 +611,7 @@
     maxPlayers: 2,
     defaultPlayers: 2,
     difficulty: true,
+    networked: true,          // start() returns snapshot() / restore()
     seatColors: ['#43d9ad', '#f5a524'],
     aiNames: ['Ava', 'Blaze'],
     options: [

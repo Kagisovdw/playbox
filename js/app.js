@@ -88,8 +88,7 @@
         el('span.gc-tag', { text: def.tagline }),
         el('span.gc-meta',
           el('span.pill', { text: def.minPlayers === def.maxPlayers ? def.minPlayers + ' players' : def.minPlayers + '-' + def.maxPlayers + ' players' }),
-          el('span.pill', { text: def.difficulty ? 'vs CPU' : 'CPU rolls' }),
-          def.networked === false ? el('span.pill', { text: 'one device' }) : null
+          el('span.pill', { text: def.difficulty ? 'vs CPU' : 'CPU rolls' })
         )
       );
       grid.appendChild(card);
@@ -283,7 +282,8 @@
     // In a room, Start does not start anything locally - it asks the server,
     // which starts it on every device at the same moment with the same seed.
     if (G.Net && G.Net.active && !G.Net.playing) {
-      if (def.networked === false) {
+      // Across devices a game must be able to hand over its whole state.
+      if (def.networked !== true) {
         G.toast(def.name + ' is one-device only for now');
         return;
       }
@@ -337,9 +337,6 @@
     var def = room && room.game ? G.Games.get(room.game.id) : null;
     if (!def) { G.toast('That game is not available here'); return; }
 
-    // One seed for the room means every device deals and rolls identically.
-    G.setSeed(room.seed);
-
     var seats = room.seats.slice(0, def.maxPlayers).map(function (s, i) {
       return { index: i, name: s.name, isAI: false, color: def.seatColors[i], label: null };
     });
@@ -371,11 +368,26 @@
       finish: function (humanWon) { G.recordResult(def.id, humanWon); }
     };
     current = { def: def, instance: def.start($('#game-root'), config) };
+
+    // Decks are shuffled on each device, so seat 1 publishes the opening
+    // board and everyone else adopts it before the first move.
+    if (G.Net.seat === 0 && current.instance && current.instance.snapshot) {
+      G.Net.publish();
+    }
   }
 
   if (G.Net) {
     G.Net.onStart = startNetworkGame;
     G.Net.onReset = function () { G.setSeed(0); };
+    G.Net.getSnapshot = function () {
+      return (current && current.instance && current.instance.snapshot)
+        ? current.instance.snapshot() : null;
+    };
+    G.Net.onState = function (snap) {
+      if (current && current.instance && current.instance.restore) {
+        current.instance.restore(snap);
+      }
+    };
   }
 
   /* ------------------------------------------------------------------ boot */
