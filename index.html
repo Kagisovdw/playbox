@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Playbox</title>
+<meta name="theme-color" content="#0d1020" />
+<link rel="stylesheet" href="css/style.css" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+</head>
+<body>
+
+<div id="app">
+
+  <header id="topbar">
+    <button id="btn-back" class="icon-btn" hidden aria-label="Back to menu">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text"><strong id="topbar-title">Playbox</strong><small id="topbar-sub">Open it up</small></span>
+    </div>
+    <button id="btn-rules" class="icon-btn" hidden aria-label="Rules">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.6 9.2a2.5 2.5 0 114 2c-.9.7-1.6 1.2-1.6 2.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></svg>
+    </button>
+  </header>
+
+  <!-- ============ MENU ============ -->
+  <main id="screen-menu" class="screen is-active">
+    <div class="menu-hero">
+      <h1>Pick your game</h1>
+      <p>Play against the computer or pass the device around.</p>
+    </div>
+    <div id="game-grid" class="game-grid"></div>
+    <div id="stats-strip" class="stats-strip"></div>
+  </main>
+
+  <!-- ============ SETUP ============ -->
+  <main id="screen-setup" class="screen">
+    <div class="setup-wrap">
+      <div class="setup-head">
+        <span id="setup-icon" class="setup-icon"></span>
+        <div>
+          <h2 id="setup-title">Game</h2>
+          <p id="setup-tagline" class="muted"></p>
+        </div>
+      </div>
+
+      <section class="setup-block" id="block-count">
+        <h3>Players</h3>
+        <div id="count-options" class="chip-row" role="group" aria-label="Number of players"></div>
+      </section>
+
+      <section class="setup-block">
+        <h3>Seats</h3>
+        <div id="seat-list" class="seat-list"></div>
+      </section>
+
+      <section class="setup-block" id="block-difficulty">
+        <h3>Computer skill</h3>
+        <div id="difficulty-options" class="chip-row" role="group" aria-label="Difficulty"></div>
+      </section>
+
+      <section class="setup-block" id="block-options" hidden>
+        <h3>House rules</h3>
+        <div id="option-list" class="option-list"></div>
+      </section>
+
+      <button id="btn-start" class="btn btn-primary btn-lg">Start game</button>
+    </div>
+  </main>
+
+  <!-- ============ GAME ============ -->
+  <main id="screen-game" class="screen">
+    <div id="game-root"></div>
+  </main>
+
+</div>
+
+<div id="modal-layer" class="modal-layer" hidden></div>
+<div id="toast-layer" class="toast-layer" aria-live="polite"></div>
+
+<script src="js/core.js"></script>
+<script src="js/connect4.js"></script>
+<script src="js/snakes.js"></script>
+<script src="js/ludo.js"></script>
+<script src="js/uno.js"></script>
+<script src="js/memory.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+  // Offline support needs http(s); double-clicking index.html (file://) skips it.
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* optional */ });
+    });
+  }
+</script>
+</body>
+</html>
