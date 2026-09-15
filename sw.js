@@ -10,7 +10,7 @@
    skips registration entirely - see the bottom of index.html.
    ========================================================================== */
 
-var CACHE = 'playbox-v1';
+var CACHE = 'playbox-v2';
 
 var SHELL = [
   './',
@@ -22,6 +22,7 @@ var SHELL = [
   './js/ludo.js',
   './js/uno.js',
   './js/memory.js',
+  './js/xo.js',
   './js/app.js',
   './manifest.webmanifest',
   './icons/icon-192.png',

@@ -1,7 +1,7 @@
 /* ==========================================================================
    Playbox - shared design system
    Sections: tokens / reset / layout / topbar / menu / setup / controls
-             / modal+toast / boards (connect4, snakes, ludo, uno, memory)
+             / modal+toast / boards (connect4, snakes, ludo, uno, memory, xo)
    ========================================================================== */
 
 /* ---------- tokens ---------- */
@@ -696,6 +696,89 @@ button{font:inherit;color:inherit}
   box-shadow:0 0 0 2px color-mix(in srgb,var(--owner) 52%,transparent),var(--shadow-1);
 }
 @keyframes mem-pop{0%{transform:scale(1)}45%{transform:scale(1.09)}100%{transform:scale(1)}}
+
+/* ==========================================================================
+   X'S & O'S
+   ========================================================================== */
+.xo-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.xo-svg{width:100%;height:100%;display:block;animation:xo-pop .22s var(--ease)}
+@keyframes xo-pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ---- classic 3x3 ---- */
+.xo-board{
+  --cell:clamp(66px,17vw,104px);
+  display:grid;
+  grid-template-columns:repeat(3,var(--cell));
+  grid-auto-rows:var(--cell);
+  gap:8px;
+  padding:8px;
+  border-radius:var(--r-lg);
+  background:var(--panel);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-2);
+}
+.xo-cell{
+  padding:18%;
+  border:1px solid var(--line-soft);
+  border-radius:var(--r-md);
+  background:var(--bg);
+  cursor:default;
+  transition:background .16s,border-color .16s,transform .16s var(--ease);
+}
+.xo-cell.is-open{cursor:pointer}
+.xo-cell.is-open:hover{background:var(--panel-2);border-color:var(--panel-3)}
+.xo-cell.is-open:active{transform:scale(.95)}
+.xo-cell.is-win{
+  background:color-mix(in srgb,var(--gold) 20%,var(--bg));
+  border-color:var(--gold);
+  animation:xo-glow 1.1s ease-in-out infinite;
+}
+@keyframes xo-glow{
+  0%,100%{box-shadow:0 0 0 0 rgba(247,201,72,.45)}
+  50%{box-shadow:0 0 0 7px rgba(247,201,72,0)}
+}
+
+/* ---- ultimate: nine boards ---- */
+.xo-ultimate{
+  --cell:clamp(19px,4.4vw,32px);
+  display:grid;
+  grid-template-columns:repeat(3,auto);
+  gap:9px;
+  padding:9px;
+  border-radius:var(--r-lg);
+  background:var(--panel);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-2);
+}
+.xo-mini{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(3,var(--cell));
+  grid-auto-rows:var(--cell);
+  gap:3px;
+  padding:5px;
+  border-radius:var(--r-md);
+  border:2px solid transparent;
+  background:var(--bg);
+  transition:border-color .2s,background .2s;
+}
+.xo-mini .xo-cell{padding:14%;border-radius:6px;background:var(--panel-2);border-color:transparent}
+.xo-mini .xo-cell.is-open:hover{background:var(--panel-3)}
+/* The board you are being sent to. */
+.xo-mini.is-active{
+  border-color:var(--accent-2);
+  background:color-mix(in srgb,var(--accent-2) 11%,var(--bg));
+}
+.xo-mini.is-drawn{opacity:.55}
+/* A claimed board dims its cells and shows one large mark on top. */
+.xo-mini.is-won .xo-cell{opacity:.16}
+.xo-mini-claim{
+  position:absolute;inset:14%;
+  pointer-events:none;
+  display:block;
+}
+.xo-mini.is-win{animation:xo-glow 1.1s ease-in-out infinite;border-color:var(--gold)}
+.xo-ultimate .xo-cell.is-win{background:color-mix(in srgb,var(--gold) 16%,var(--panel-2));animation:none}
 
 /* ---------- rules sheet ---------- */
 .rules-body{text-align:left;color:var(--muted);font-size:14px;line-height:1.65;max-height:58vh;overflow-y:auto}

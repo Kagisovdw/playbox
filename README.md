@@ -2,8 +2,8 @@
 
 **Play it: https://kagisovdw.github.io/playbox/**
 
-Five board and card games in one browser app: **Ludo**, **Uno**, **Snakes & Ladders**,
-**Connect Four** and **Memory**. Every game supports computer opponents and
+Six board and card games in one browser app: **Ludo**, **Uno**, **Snakes & Ladders**,
+**Connect Four**, **Memory** and **X's & O's**. Every game supports computer opponents and
 pass-and-play on a single device.
 
 ## Running it
@@ -53,6 +53,7 @@ private URL that runs on any device with nothing installed. Re-run it after chan
 | Snakes & Ladders | 2–4 | Pure chance — the computer just rolls |
 | Uno | 2–4 | Heuristic (card value, colour control, pressure) |
 | Memory | 2–4 | Imperfect recall — three retention levels |
+| X's & O's | 2 | Perfect minimax (classic) / depth-4 search (Ultimate) |
 
 Each seat is set to **Human** or **Computer** independently, so you can play solo
 against bots, hand the device around a table, or mix both.
@@ -71,6 +72,15 @@ roll. Three sixes in a row forfeits the turn.
 **Snakes & Ladders** — the classic Milton Bradley layout. Two house rules are
 switchable: roll again on a six, and exact roll to finish (overshooting 100 bounces
 you back).
+
+**X's & O's** — the classic 3×3, plus **Ultimate** as a house rule: nine small boards
+in a 3×3 meta-grid, where the cell you play dictates which board your opponent must
+answer in, and claiming three boards in a row wins. Classic is a solved game, so
+`Hard` plays perfect minimax — it cannot be beaten, only drawn (verified over 120
+games against both a solid and a random opponent: zero losses). `Easy` wanders and
+only sometimes spots a win; `Normal` takes wins and blocks losses but is blind to
+forks. On Ultimate, `Hard` runs alpha-beta four moves deep and beats `Normal` 35–9
+head to head.
 
 **Memory** — a grid of face-down pairs; flip two a turn and claim what matches.
 Claimed pairs stay face up in the finder's colour. Board size is switchable between
@@ -92,6 +102,7 @@ them. Optionally play a full match to 500 points.
 - **Connect Four** — click a column, or press `1`–`7`.
 - **Ludo / Snakes** — click the dice; in Ludo click a highlighted token to move it.
 - **Uno** — click a playable card, or the draw pile. Dimmed cards cannot be played.
+- **X's & O's** — click any open square. In Ultimate, the board you must play in is outlined.
 - **Memory** — click any face-down card.
 - The `?` button in the top bar opens that game's rules at any time.
 
@@ -110,6 +121,7 @@ js/snakes.js      board geometry, SVG snakes and ladders, movement
 js/ludo.js        track geometry, move generation, captures, blocks, AI
 js/uno.js         deck, turn flow, action cards, challenges, UNO calls, AI
 js/memory.js      deck, flip/match flow, per-CPU memory model
+js/xo.js          classic 3x3 + Ultimate nine-board, minimax and alpha-beta
 
 manifest.webmanifest  PWA metadata: name, colours, icon set
 sw.js                 service worker: offline cache (stale-while-revalidate)
