@@ -72,7 +72,7 @@
 
     function observe(index) {
       brains.forEach(function (b) {
-        if (!b || Math.random() > skill.retention) return;
+        if (!b || G.random() > skill.retention) return;
         var at = b.order.indexOf(index);
         if (at !== -1) b.order.splice(at, 1);
         b.order.push(index);
@@ -177,7 +177,7 @@
     shell.stage.appendChild(el('div.mem-wrap', gridEl, side));
     shell.buildSeats(seats, function (_, i) { return pairsLabel(scores[i]); });
     shell.setActions(el('button.btn.btn-sm', {
-      type: 'button', text: 'Restart', onclick: function () { config.restart(); }
+      type: 'button', text: 'Restart', 'data-local': '1', onclick: function () { config.restart(); }
     }));
 
     function pairsLabel(n) { return n + (n === 1 ? ' pair' : ' pairs'); }

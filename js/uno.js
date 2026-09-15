@@ -115,7 +115,7 @@
    */
   function aiChoose(hand, options, top, color, pressure, difficulty) {
     if (!options.length) return -1;
-    if (difficulty === 'easy' && Math.random() < 0.45) return G.pick(options);
+    if (difficulty === 'easy' && G.random() < 0.45) return G.pick(options);
 
     var scored = options.map(function (i) {
       var card = hand[i];
@@ -158,7 +158,18 @@
     var deck = [], discard = [], hands = [], scores = seats.map(function () { return 0; });
     var color = 'r', turn = 0, dir = 1, over = false, roundOver = false;
     var unoFlag = seats.map(function () { return false; });
-    var viewSeat = seats.findIndex(function (s) { return !s.isAI; });   // whose hand is face-up
+    /**
+     * Across devices each player has their own screen, so this device shows
+     * its own seat's hand and nothing else - no passing, no peeking. On one
+     * device it stays as it was: the current human, behind a hand-off screen.
+     */
+    var netSeat = (G.Net && G.Net.playing && G.Net.seat >= 0 && G.Net.seat < seats.length)
+      ? G.Net.seat : -1;
+    var networked = netSeat >= 0;
+
+    var viewSeat = networked
+      ? netSeat
+      : seats.findIndex(function (s) { return !s.isAI; });   // whose hand is face-up
     var lastHumanSeen = -1;
     var pendingDrawnIndex = -1;                      // card just drawn, awaiting play/keep
 
@@ -273,7 +284,10 @@
       G.clear(deckPile);
       var canDraw = !roundOver && viewSeat === turn && !seats[turn].isAI && pendingDrawnIndex === -1;
       var back = cardNode(null, '.uno-deck' + (canDraw ? '' : '.dim'));
-      if (canDraw) back.addEventListener('click', humanDraw);
+      if (canDraw) {
+        back.setAttribute('data-play', 'draw');    // relayed across devices
+        back.addEventListener('click', humanDraw);
+      }
       deckPile.appendChild(back);
       deckPile.appendChild(el('div.label', { text: deck.length + ' left' }));
 
@@ -332,6 +346,7 @@
       hand.forEach(function (card, i) {
         var ok = !!playableSet[i] && pendingDrawnIndex === -1;
         var node = cardNode(card, ok ? '.playable' : (myTurn ? '.blocked' : ''));
+        node.setAttribute('data-play', 'card');    // relayed across devices
         if (i === pendingDrawnIndex) node.classList.add('just-drawn');
         if (ok) {
           node.addEventListener('click', function () { humanPlay(i); });
@@ -402,6 +417,13 @@
       var seat = seats[seatIndex];
       if (seat.isAI) return Promise.resolve();
 
+      // Own screen each: nothing to hand over, and the view never moves.
+      if (networked) {
+        viewSeat = netSeat;
+        render();
+        return Promise.resolve();
+      }
+
       if (!multiHuman || lastHumanSeen === -1 || lastHumanSeen === seatIndex) {
         lastHumanSeen = seatIndex;
         viewSeat = seatIndex;
@@ -428,6 +450,7 @@
     }
 
     function viewSeatFallback() {
+      if (networked) { viewSeat = netSeat; return; }
       if (viewSeat === -1 && humanSeats.length) {
         viewSeat = lastHumanSeen !== -1 ? lastHumanSeen : seats.findIndex(function (s) { return !s.isAI; });
       }
@@ -508,6 +531,7 @@
         title: who + ', pick a colour',
         body: body,
         dismissable: false,
+        relay: true,
         actions: [],
         onReady: function (fn) { close = fn; }
       }).then(function (chosen) { return chosen || G.pick(COLORS); });
@@ -595,7 +619,7 @@
 
       // The computer usually remembers, but not always.
       var forget = config.difficulty === 'hard' ? 0.08 : (config.difficulty === 'easy' ? 0.35 : 0.22);
-      if (Math.random() > forget) {
+      if (G.random() > forget) {
         unoFlag[seatIndex] = true;
         G.toast(seat.name + ': UNO!');
         render();
@@ -715,7 +739,7 @@
         // Challenge more readily when the pickup really hurts.
         var base = config.difficulty === 'hard' ? 0.3 : 0.18;
         if (hands[victim].length <= 3) base += 0.2;
-        var challenged = Math.random() < base;
+        var challenged = G.random() < base;
         shell.say(challenged
           ? '<b>' + G.escapeHtml(victimSeat.name) + '</b> challenges!'
           : '<b>' + G.escapeHtml(victimSeat.name) + '</b> accepts the Draw Four');
@@ -727,6 +751,7 @@
         if (ticker.dead) return;
         return G.modal({
           icon: '🃏',
+          relay: true,
           title: playerSeat.name + ' played a Wild Draw Four',
           body: 'Challenge it? If they were still holding a ' + COLOR_NAME[effect.previousColor] +
             ' card they could have played, they draw 4 instead. Get it wrong and you draw 6.',
@@ -806,6 +831,7 @@
           }).join('');
           return G.modal({
             icon: '🃏',
+            relay: true,
             title: seat.name + ' wins the round',
             bodyHtml: '+' + gained + ' points<div style="margin-top:10px">' + board + '</div>',
             dismissable: false,
@@ -867,6 +893,10 @@
       '<text x="14" y="14.4" font-size="7" font-weight="900" text-anchor="middle" fill="#f0483c">4</text></svg>',
     minPlayers: 2,
     maxPlayers: 4,
+    // Across devices every player sees a different board - their own hand,
+    // their own controls - so a move cannot be described as "the element at
+    // this position". Uno needs semantic moves before it can be networked.
+    networked: false,
     defaultPlayers: 3,
     difficulty: true,
     seatColors: ['#e5484d', '#2f7df6', '#22b36b', '#f5c518'],

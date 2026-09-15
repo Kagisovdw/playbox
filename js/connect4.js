@@ -166,7 +166,7 @@
     if (!moves.length) return -1;
 
     // Easy still blocks the obvious, but wanders a third of the time.
-    if (difficulty === 'easy' && Math.random() < 0.34) return G.pick(moves);
+    if (difficulty === 'easy' && G.random() < 0.34) return G.pick(moves);
 
     var depth = DEPTH[difficulty] || 4;
     var best = -Infinity, bestMoves = [];
@@ -228,7 +228,7 @@
 
     shell.buildSeats(seats, function (seat) { return seat.isAI ? 'CPU' : 'You'; });
     shell.setActions(el('button.btn.btn-sm', {
-      type: 'button', text: 'Restart', onclick: function () { config.restart(); }
+      type: 'button', text: 'Restart', 'data-local': '1', onclick: function () { config.restart(); }
     }));
 
     /* --- keyboard: 1-7 drops, or arrow keys --- */

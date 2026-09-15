@@ -88,7 +88,8 @@
         el('span.gc-tag', { text: def.tagline }),
         el('span.gc-meta',
           el('span.pill', { text: def.minPlayers === def.maxPlayers ? def.minPlayers + ' players' : def.minPlayers + '-' + def.maxPlayers + ' players' }),
-          el('span.pill', { text: def.difficulty ? 'vs CPU' : 'CPU rolls' })
+          el('span.pill', { text: def.difficulty ? 'vs CPU' : 'CPU rolls' }),
+          def.networked === false ? el('span.pill', { text: 'one device' }) : null
         )
       );
       grid.appendChild(card);
@@ -278,6 +279,24 @@
 
   function startGame() {
     var def = setup.def;
+
+    // In a room, Start does not start anything locally - it asks the server,
+    // which starts it on every device at the same moment with the same seed.
+    if (G.Net && G.Net.active && !G.Net.playing) {
+      if (def.networked === false) {
+        G.toast(def.name + ' is one-device only for now');
+        return;
+      }
+      var here = G.Net.seats.length;
+      if (here < def.minPlayers) {
+        G.toast(def.name + ' needs at least ' + def.minPlayers + ' players');
+        return;
+      }
+      G.Net.startGame(def.id, setup.difficulty, setup.options)
+        .catch(function (e) { G.toast(e.message); });
+      return;
+    }
+
     var seats = setup.seats.slice(0, setup.count).map(function (s, i) {
       return {
         index: i,
@@ -311,9 +330,58 @@
     current = { def: def, instance: def.start($('#game-root'), config) };
   }
 
+  /* -------------------------------------------------------- networked play */
+
+  /** Build the same game, with the same seed, on every device in the room. */
+  function startNetworkGame(room) {
+    var def = room && room.game ? G.Games.get(room.game.id) : null;
+    if (!def) { G.toast('That game is not available here'); return; }
+
+    // One seed for the room means every device deals and rolls identically.
+    G.setSeed(room.seed);
+
+    var seats = room.seats.slice(0, def.maxPlayers).map(function (s, i) {
+      return { index: i, name: s.name, isAI: false, color: def.seatColors[i], label: null };
+    });
+    if (G.Net.seat >= seats.length) {
+      G.toast(def.name + ' seats only ' + def.maxPlayers + ' - you are watching');
+    }
+
+    document.documentElement.style.setProperty('--card-accent', def.accent);
+    topTitle.textContent = def.name;
+    topSub.textContent = 'Room ' + room.code;
+    btnRules.hidden = false;
+
+    destroyGame();
+    show('game');
+
+    var backToLobby = function () {
+      G.Net.reset();
+      goMenu();
+      G.Net.openLobby();
+    };
+
+    var config = {
+      seats: seats,
+      difficulty: room.game.difficulty,
+      options: Object.assign({}, room.game.options),
+      // Both routes return everyone to the lobby, so devices never diverge.
+      exit: backToLobby,
+      restart: backToLobby,
+      finish: function (humanWon) { G.recordResult(def.id, humanWon); }
+    };
+    current = { def: def, instance: def.start($('#game-root'), config) };
+  }
+
+  if (G.Net) {
+    G.Net.onStart = startNetworkGame;
+    G.Net.onReset = function () { G.setSeed(0); };
+  }
+
   /* ------------------------------------------------------------------ boot */
 
   renderMenu();
   renderStats();
+  if (G.Net) G.Net.mount();
   show('menu');
 })();

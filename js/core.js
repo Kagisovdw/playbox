@@ -80,7 +80,28 @@
   /* ---------- async / random ---------- */
 
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-  function rand(n) { return Math.floor(Math.random() * n); }
+
+  /**
+   * Randomness, optionally seeded. Networked devices each run their own copy
+   * of a game, so they must draw identical dice rolls, shuffles and AI choices
+   * - seeding from a value the server hands out is what keeps them agreeing.
+   * With no seed set this is plain Math.random, exactly as before.
+   *
+   * Every game must draw through G.random / G.rand / G.pick / G.shuffle;
+   * a direct Math.random call would desync a networked game.
+   */
+  var seedState = 0;
+  function setSeed(seed) { seedState = (seed >>> 0); }
+  function random() {
+    if (!seedState) return Math.random();
+    // mulberry32 - small, fast, and good enough for shuffling a deck.
+    seedState = (seedState + 0x6D2B79F5) >>> 0;
+    var t = seedState;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  function rand(n) { return Math.floor(random() * n); }
   function pick(arr) { return arr[rand(arr.length)]; }
 
   function shuffle(arr) {
@@ -170,6 +191,7 @@
         document.removeEventListener('keydown', onKey);
         clear(modalLayer);
         modalLayer.hidden = true;
+        modalLayer.classList.remove('is-relayed');
         resolve(value);
       }
       function onKey(e) {
@@ -179,6 +201,10 @@
       clear(modalLayer);
       modalLayer.appendChild(box);
       modalLayer.hidden = false;
+      // `relay` marks a dialog that is part of the game, not the interface -
+      // picking a Wild colour, say. Networked play has to send those choices
+      // to the other devices; a rules sheet or a leave prompt stays local.
+      modalLayer.classList.toggle('is-relayed', !!opts.relay);
       document.addEventListener('keydown', onKey);
       if (opts.dismissable !== false) {
         modalLayer.onclick = function (e) { if (e.target === modalLayer) close(null); };
@@ -308,6 +334,9 @@
           s.node.classList.toggle('is-turn', i === activeIndex);
           if (subtitleFor) s.sub.textContent = dedupe(subtitleFor(i), s.name);
         });
+        // Networked play needs to know whose turn it is to police seat
+        // ownership, and this is the one place every game reports it.
+        if (window.G && G.Net && G.Net.noteTurn) G.Net.noteTurn(activeIndex);
       },
 
       /** Set the status line. Accepts HTML. */
@@ -367,6 +396,7 @@
   window.G = {
     $: $, $$: $$, el: el, svg: svg, clear: clear, append: append,
     sleep: sleep, rand: rand, pick: pick, shuffle: shuffle, roll: roll,
+    random: random, setSeed: setSeed,
     Store: Store, recordResult: recordResult, getStats: getStats,
     toast: toast, modal: modal,
     paintDice: paintDice, makeDice: makeDice,

@@ -153,7 +153,7 @@
     shell.stage.appendChild(el('div.sl-wrap', boardEl, side));
     shell.buildSeats(seats, function (seat) { return seat.isAI ? 'CPU' : 'You'; });
     shell.setActions(el('button.btn.btn-sm', {
-      type: 'button', text: 'Restart', onclick: function () { config.restart(); }
+      type: 'button', text: 'Restart', 'data-local': '1', onclick: function () { config.restart(); }
     }));
 
     /* --- token placement --- */

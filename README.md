@@ -44,6 +44,50 @@ to force every client to drop its cache, bump `CACHE` in `sw.js`.
 private URL that runs on any device with nothing installed. Re-run it after changing
 `index.html`.
 
+## Playing across devices
+
+Experimental, and **only on your own network**. One machine runs a small
+server; everyone else opens the address it prints.
+
+```
+node server.js
+```
+
+It prints a `http://192.168.x.x:8080` style address — open that on the other
+phones or laptops, tap **Play across devices**, and create or join a room with
+the four-letter code. The button only appears when `server.js` is serving the
+page, so it stays hidden on GitHub Pages and on `file://`.
+
+No dependencies; Node's `http` module only. The server serves the files and
+relays moves. It owns the seat list, one random seed and the order of moves,
+which is what keeps devices agreeing: every device runs the same game code, so
+the same seed plus the same moves produces the same board. A click is never
+applied where it happens — it goes to the server and comes back to everyone
+at once.
+
+### What works, and what does not
+
+Working across devices: **X's & O's** and **Memory** are verified end to end
+(identical shuffles, moves relayed both ways, out-of-turn clicks refused).
+**Connect Four**, **Snakes & Ladders** and **Ludo** share the same shape — one
+board everyone sees — but are not yet verified.
+
+**Uno is one-device only**, and the menu card says so. Every other game shows
+the same board to everyone, so a move can travel as "the square at this
+position". Uno renders a different board per player — your hand, your controls
+— so positions do not line up between devices. It needs moves described
+semantically ("play card 3") before it can work, which is the next piece of
+work rather than a small fix.
+
+**Known bug:** server-sent event streams are not being released properly, so
+connections accumulate until the browser's six-per-origin limit is hit and the
+page stops responding. Reloading clears it. Do not rely on this for a long
+session yet.
+
+The server also cannot referee: it enforces whose turn it is, but knows no
+game's rules, and every device holds the whole game state. Fine among people in
+the same room; not something to play against a stranger.
+
 ## The games
 
 | Game | Players | Opponent |
@@ -122,6 +166,8 @@ js/ludo.js        track geometry, move generation, captures, blocks, AI
 js/uno.js         deck, turn flow, action cards, challenges, UNO calls, AI
 js/memory.js      deck, flip/match flow, per-CPU memory model
 js/xo.js          classic 3x3 + Ultimate nine-board, minimax and alpha-beta
+js/net.js         across-devices lobby, move relay, seat ownership
+server.js         LAN server: static files + room relay (no dependencies)
 
 manifest.webmanifest  PWA metadata: name, colours, icon set
 sw.js                 service worker: offline cache (stale-while-revalidate)

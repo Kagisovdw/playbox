@@ -130,7 +130,7 @@
       // Mostly wanders, but will spot a win in front of it often enough
       // that it never feels broken.
       var win = immediate(cells, player);
-      if (win >= 0 && Math.random() < 0.55) return win;
+      if (win >= 0 && G.random() < 0.55) return win;
       return G.pick(empties);
     }
 
@@ -270,7 +270,7 @@
 
     if (difficulty === 'easy') {
       // Grabs an obvious small-board win now and then, otherwise wanders.
-      if (Math.random() < 0.5) {
+      if (G.random() < 0.5) {
         for (var i = 0; i < moves.length; i++) {
           var b = Math.floor(moves[i] / 9), c = moves[i] % 9;
           if (st.meta[b] !== EMPTY) continue;
@@ -362,7 +362,7 @@
     shell.stage.appendChild(el('div.xo-wrap', boardEl, legend));
     shell.buildSeats(seats, function (seat, i) { return markName(i + 1); });
     shell.setActions(el('button.btn.btn-sm', {
-      type: 'button', text: 'Restart', onclick: function () { config.restart(); }
+      type: 'button', text: 'Restart', 'data-local': '1', onclick: function () { config.restart(); }
     }));
 
     /* --- rendering --- */

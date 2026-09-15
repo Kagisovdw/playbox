@@ -199,7 +199,7 @@
 
   function chooseMove(state, slot, moves, die, difficulty) {
     if (moves.length === 1) return moves[0];
-    if (difficulty === 'easy' && Math.random() < 0.6) return G.pick(moves);
+    if (difficulty === 'easy' && G.random() < 0.6) return G.pick(moves);
 
     var scored = moves.map(function (m) {
       var s = scoreMove(state, slot, m, die);
@@ -353,7 +353,7 @@
     shell.stage.appendChild(el('div.ludo-wrap', boardEl, side));
     shell.buildSeats(seats, function (seat, i) { return homeCount(i) + '/4 home'; });
     shell.setActions(el('button.btn.btn-sm', {
-      type: 'button', text: 'Restart', onclick: function () { config.restart(); }
+      type: 'button', text: 'Restart', 'data-local': '1', onclick: function () { config.restart(); }
     }));
 
     /* --- rendering --- */

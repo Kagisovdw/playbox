@@ -19,7 +19,7 @@
    disk (file://) skips registration - see the bottom of index.html.
    ========================================================================== */
 
-var CACHE = 'playbox-v6';
+var CACHE = 'playbox-v7';
 
 var SHELL = [
   './',
@@ -32,6 +32,7 @@ var SHELL = [
   './js/uno.js',
   './js/memory.js',
   './js/xo.js',
+  './js/net.js',
   './js/app.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
