@@ -1,16 +1,22 @@
 /* ==========================================================================
    sw.js - service worker: makes Playbox installable and playable offline.
 
-   Strategy is stale-while-revalidate: serve the cached copy immediately, then
-   refresh it in the background so the next load has your latest edits. That
-   avoids the classic "I changed a file and the browser won't show it" trap of
-   a pure cache-first worker.
+   Strategy is network-first with a cache fallback. Online, you always get the
+   deployed files, so a new game or a CSS change can never render against a
+   stale copy of the other. Offline, everything falls back to the cache.
 
-   Only runs over http(s). Opening index.html straight off disk (file://)
-   skips registration entirely - see the bottom of index.html.
+   An earlier stale-while-revalidate version shipped new HTML against old CSS
+   after a deploy, which is why this trades a little latency for consistency.
+
+   Precaching fetches with cache:'reload' so the browser's own HTTP cache
+   cannot bake a stale file into a freshly versioned cache - the exact bug
+   that let playbox-v2 be populated with v1's stylesheet.
+
+   Bump CACHE on every deploy. Only runs over http(s); opening index.html off
+   disk (file://) skips registration - see the bottom of index.html.
    ========================================================================== */
 
-var CACHE = 'playbox-v2';
+var CACHE = 'playbox-v3';
 
 var SHELL = [
   './',
@@ -34,7 +40,12 @@ self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(CACHE)
       // addAll is all-or-nothing, so one bad path would fail the whole install.
-      .then(function (c) { return Promise.all(SHELL.map(function (u) { return c.add(u).catch(function () {}); })); })
+      .then(function (c) {
+        return Promise.all(SHELL.map(function (u) {
+          // cache:'reload' forces a network hit, never the HTTP cache.
+          return c.add(new Request(u, { cache: 'reload' })).catch(function () {});
+        }));
+      })
       .then(function () { return self.skipWaiting(); })
   );
 });
@@ -59,19 +70,19 @@ self.addEventListener('fetch', function (e) {
   if (new URL(req.url).origin !== self.location.origin) return;
 
   e.respondWith(
-    caches.match(req).then(function (cached) {
-      var fresh = fetch(req).then(function (res) {
+    fetch(req)
+      .then(function (res) {
         if (res && res.status === 200 && res.type === 'basic') {
           var copy = res.clone();
           caches.open(CACHE).then(function (c) { c.put(req, copy); });
         }
         return res;
-      }).catch(function () {
-        // Offline: fall back to the cache, or the shell for a navigation.
-        return cached || caches.match('./index.html');
-      });
-
-      return cached || fresh;
-    })
+      })
+      .catch(function () {
+        // Offline: serve the cached copy, or the shell for a navigation.
+        return caches.match(req).then(function (cached) {
+          return cached || caches.match('./index.html');
+        });
+      })
   );
 });
